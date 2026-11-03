@@ -1,5 +1,8 @@
 using AgileActors.ApiAggregation.Api.Providers.OpenMeteo;
 using AgileActors.ApiAggregation.Api.Services;
+using System.Net.Http.Headers;
+using AgileActors.ApiAggregation.Api.Providers.Tmdb;
+using AgileActors.ApiAggregation.Api.Providers.OpenLibrary;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +19,27 @@ builder.Services.AddHttpClient<IWeatherService, OpenMeteoWeatherService>(client 
 {
     client.BaseAddress = new Uri("https://api.open-meteo.com/");
     client.Timeout = TimeSpan.FromSeconds(10);
+});
+
+var tmdbAccessToken = builder.Configuration["Tmdb:AccessToken"];
+
+if (string.IsNullOrWhiteSpace(tmdbAccessToken))
+{
+    throw new InvalidOperationException("TMDB access token is missing. Set Tmdb:AccessToken in User Secrets.");
+}
+
+builder.Services.AddHttpClient<IMovieService, TmdbMovieService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.themoviedb.org/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tmdbAccessToken);
+});
+
+builder.Services.AddHttpClient<IBookService, OpenLibraryBookService>(client =>
+{
+    client.BaseAddress = new Uri("https://openlibrary.org/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("AgileActors.ApiAggregation/1.0");
 });
 
 var app = builder.Build();
