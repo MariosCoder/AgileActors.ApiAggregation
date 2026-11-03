@@ -14,6 +14,34 @@ Open `AgileActors.ApiAggregation.sln` in Visual Studio and run the API project.
 No database setup is needed. The cache and statistics will be kept in
 memory and reset when the app restarts.
 
+TMDB requires an API Read Access Token. Right-click the API project in
+Visual Studio, select Manage User Secrets, and add:
+
+```json
+{
+  "Tmdb": {
+    "AccessToken": "YOUR_TMDB_READ_ACCESS_TOKEN"
+  }
+}
+
 ## Progress
 
-Just the starter project for now. I'll update this as I build the features.
+The three provider integrations are working:
+
+- Open-Meteo for current weather.
+- TMDB for popular movies.
+- Open Library for book searches.
+
+You can try them separately through Swagger:
+
+- GET /api/weather?latitude=37.9838&longitude=23.7275
+- GET /api/movies/popular
+- GET /api/books/search?query=The%20Hobbit
+
+The combined dashboard endpoint is next. Caching, filtering, sorting,
+error handling, request statistics, and automated tests are still pending.
+JWT authentication and background performance monitoring are also planned.
+
+Known issue: Open Library rejects some queries, including "The". The book endpoint
+handles this by returning 400 Bad Request with a message asking for
+a more specific search.
