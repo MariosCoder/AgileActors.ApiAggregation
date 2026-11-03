@@ -42,6 +42,5 @@ The combined dashboard endpoint is next. Caching, filtering, sorting,
 error handling, request statistics, and automated tests are still pending.
 JWT authentication and background performance monitoring are also planned.
 
-Known issue: Open Library rejects some queries, including "The". The book endpoint
-handles this by returning 400 Bad Request with a message asking for
-a more specific search.
+If Open Library rejects a search query, the books endpoint returns
+400 Bad Request with a message suggesting a more specific title or author.
