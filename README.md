@@ -1,28 +1,19 @@
-# Agile Actors API Aggregation
+# API Aggregation
 
-ASP.NET Core API aggregation interview assignment.
+My take on the Agile Actors .NET assignment.
 
-## Current status
+The idea is to fetch data from three external APIs and return it through
+one endpoint, with filtering, sorting, caching, and request statistics.
 
-Initial controller-based .NET 10 project scaffold. Aggregation, caching, statistics,
-error handling, and unit tests have not been implemented yet.
+## Running it
 
-## Development setup
+You'll need the .NET 10 SDK.
 
-Requires the .NET 10 SDK and Visual Studio with ASP.NET and web development support.
+Open `AgileActors.ApiAggregation.sln` in Visual Studio and run the API project.
 
-Open `AgileActors.ApiAggregation.sln` in Visual Studio, or run:
+No database setup is needed. The cache and statistics will be kept in
+memory and reset when the app restarts.
 
-```powershell
-dotnet build
-dotnet run --project AgileActors.ApiAggregation.Api --launch-profile http
-```
+## Progress
 
-Use the listening URL printed in the console. The template endpoint is
-`GET /weatherforecast`; the OpenAPI document is at `/openapi/v1.json` in Development.
-The weather endpoint returns generated sample data, not an external provider.
-
-## Storage
-
-No database connection is required. The planned statistics store and cache will
-use application memory, so their contents will reset when the process restarts.
+Just the starter project for now. I'll update this as I build the features.
