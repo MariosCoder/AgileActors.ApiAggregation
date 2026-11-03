@@ -1,0 +1,6 @@
+@AgileActors.ApiAggregation.Api_HostAddress = http://localhost:5183
+
+GET {{AgileActors.ApiAggregation.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
