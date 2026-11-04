@@ -46,9 +46,7 @@ public sealed class BooksDashboardProvider : IDashboardProvider
         {
             return DashboardSectionFactory.CreateUnavailable("books", "open-library", "query_rejected", exception.Message);
         }
-        catch (Exception exception) when (
-            !cancellationToken.IsCancellationRequested &&
-            exception is HttpRequestException or InvalidDataException or JsonException or OperationCanceledException)
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested && exception is HttpRequestException or HttpIOException or InvalidDataException or JsonException or OperationCanceledException)
         {
             var isTimeout = exception is OperationCanceledException;
             var code = isTimeout ? "provider_timeout" : "provider_unavailable";

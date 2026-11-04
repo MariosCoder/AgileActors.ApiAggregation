@@ -13,7 +13,7 @@ public sealed class DashboardService : IDashboardService
 
     public async Task<DashboardResponse> GetDashboardAsync(DashboardRequest request, CancellationToken cancellationToken = default)
     {
-        var requestedCategories = request.Categories.Select(category => category.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var requestedCategories = request.Categories.Select(category => category?.Trim() ?? string.Empty).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var availableCategories = _providers.Select(provider => provider.Category).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var unknownCategories = requestedCategories.Except(availableCategories, StringComparer.OrdinalIgnoreCase).ToArray();
 

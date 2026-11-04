@@ -23,8 +23,7 @@ public sealed class DashboardRequest : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        var includesWeather = Categories.Length == 0 || Categories.Any(category => string.Equals(category.Trim(), "weather", StringComparison.OrdinalIgnoreCase));
-
+        var includesWeather = Categories.Length == 0 || Categories.Any(category => string.Equals(category?.Trim(), "weather", StringComparison.OrdinalIgnoreCase));
         if (includesWeather && Latitude is null)
         {
             yield return new ValidationResult("Latitude is required when weather is selected.", new[] { nameof(Latitude) });
@@ -35,8 +34,7 @@ public sealed class DashboardRequest : IValidatableObject
             yield return new ValidationResult("Longitude is required when weather is selected.", new[] { nameof(Longitude) });
         }
 
-        var includesBooks = Categories.Length == 0 || Categories.Any(category => string.Equals(category.Trim(), "books", StringComparison.OrdinalIgnoreCase));
-
+        var includesBooks = Categories.Length == 0 || Categories.Any(category => string.Equals(category?.Trim(), "books", StringComparison.OrdinalIgnoreCase));
         if (includesBooks && string.IsNullOrWhiteSpace(BookQuery))
         {
             yield return new ValidationResult("BookQuery is required when books are selected.", new[] { nameof(BookQuery) });

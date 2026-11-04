@@ -7,8 +7,24 @@ using AgileActors.ApiAggregation.Api.Dashboard;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgileActors.ApiAggregation.Api.Http;
+using AgileActors.ApiAggregation.Api.Statistics;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using AgileActors.ApiAggregation.Api.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters.ValidateIssuer = true;
+    options.TokenValidationParameters.ValidateAudience = true;
+    options.TokenValidationParameters.ValidateLifetime = true;
+    options.TokenValidationParameters.ValidateIssuerSigningKey = true;
+    options.TokenValidationParameters.RequireSignedTokens = true;
+    options.TokenValidationParameters.RequireExpirationTime = true;
+    options.TokenValidationParameters.ClockSkew = TimeSpan.FromSeconds(30);
+});
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -18,15 +34,19 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddOpenApi(options =>
 {
     options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
+    options.AddDocumentTransformer<BearerSecurityDocumentTransformer>();
 });
 
+builder.Services.AddSingleton<ProviderStatisticsStore>(services => new ProviderStatisticsStore(new[] { "open-meteo", "tmdb", "open-library" }, services.GetRequiredService<TimeProvider>()));
 builder.Services.AddTransient<ProviderRetryHandler>();
 
 builder.Services.AddHttpClient<IWeatherService, OpenMeteoWeatherService>(client =>
 {
     client.BaseAddress = new Uri("https://api.open-meteo.com/");
     client.Timeout = TimeSpan.FromSeconds(10);
-}).AddHttpMessageHandler<ProviderRetryHandler>();
+})
+.AddHttpMessageHandler<ProviderRetryHandler>()
+.AddHttpMessageHandler(services => new ProviderStatisticsHandler("open-meteo", services.GetRequiredService<ProviderStatisticsStore>()));
 
 var tmdbAccessToken = builder.Configuration["Tmdb:AccessToken"];
 
@@ -40,14 +60,17 @@ builder.Services.AddHttpClient<IMovieService, TmdbMovieService>(client =>
     client.BaseAddress = new Uri("https://api.themoviedb.org/");
     client.Timeout = TimeSpan.FromSeconds(10);
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tmdbAccessToken);
-}).AddHttpMessageHandler<ProviderRetryHandler>();
+})
+.AddHttpMessageHandler<ProviderRetryHandler>()
+.AddHttpMessageHandler(services => new ProviderStatisticsHandler("tmdb", services.GetRequiredService<ProviderStatisticsStore>()));
 
 builder.Services.AddHttpClient<IBookService, OpenLibraryBookService>(client =>
 {
     client.BaseAddress = new Uri("https://openlibrary.org/");
     client.Timeout = TimeSpan.FromSeconds(10);
     client.DefaultRequestHeaders.UserAgent.ParseAdd("AgileActors.ApiAggregation/1.0");
-}).AddHttpMessageHandler<ProviderRetryHandler>();
+}).AddHttpMessageHandler<ProviderRetryHandler>()
+.AddHttpMessageHandler(services => new ProviderStatisticsHandler("open-library", services.GetRequiredService<ProviderStatisticsStore>()));
 
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
@@ -58,6 +81,7 @@ builder.Services.AddSingleton<DashboardCache>();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 builder.Services.AddSingleton<DashboardFetchCoordinator>();
 builder.Services.AddScoped<DashboardCacheService>();
+builder.Services.AddHostedService<ProviderAnomalyMonitor>();
 
 var app = builder.Build();
 
@@ -74,8 +98,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers().RequireAuthorization();
 
 app.Run();
+
+public partial class Program
+{
+}
