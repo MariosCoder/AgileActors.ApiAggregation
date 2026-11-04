@@ -6,6 +6,7 @@ using AgileActors.ApiAggregation.Api.Providers.OpenLibrary;
 using AgileActors.ApiAggregation.Api.Dashboard;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AgileActors.ApiAggregation.Api.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,11 +20,13 @@ builder.Services.AddOpenApi(options =>
     options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
 });
 
+builder.Services.AddTransient<ProviderRetryHandler>();
+
 builder.Services.AddHttpClient<IWeatherService, OpenMeteoWeatherService>(client =>
 {
     client.BaseAddress = new Uri("https://api.open-meteo.com/");
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddHttpMessageHandler<ProviderRetryHandler>();
 
 var tmdbAccessToken = builder.Configuration["Tmdb:AccessToken"];
 
@@ -37,20 +40,24 @@ builder.Services.AddHttpClient<IMovieService, TmdbMovieService>(client =>
     client.BaseAddress = new Uri("https://api.themoviedb.org/");
     client.Timeout = TimeSpan.FromSeconds(10);
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tmdbAccessToken);
-});
+}).AddHttpMessageHandler<ProviderRetryHandler>();
 
 builder.Services.AddHttpClient<IBookService, OpenLibraryBookService>(client =>
 {
     client.BaseAddress = new Uri("https://openlibrary.org/");
     client.Timeout = TimeSpan.FromSeconds(10);
     client.DefaultRequestHeaders.UserAgent.ParseAdd("AgileActors.ApiAggregation/1.0");
-});
+}).AddHttpMessageHandler<ProviderRetryHandler>();
 
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 builder.Services.AddScoped<IDashboardProvider, WeatherDashboardProvider>();
 builder.Services.AddScoped<IDashboardProvider, MoviesDashboardProvider>();
 builder.Services.AddScoped<IDashboardProvider, BooksDashboardProvider>();
+builder.Services.AddSingleton<DashboardCache>();
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+builder.Services.AddSingleton<DashboardFetchCoordinator>();
+builder.Services.AddScoped<DashboardCacheService>();
 
 var app = builder.Build();
 

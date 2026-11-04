@@ -6,44 +6,41 @@ namespace AgileActors.ApiAggregation.Api.Dashboard;
 
 public sealed class MoviesDashboardProvider : IDashboardProvider
 {
-    private readonly IMovieService _movieService;
+    private static readonly DashboardCachePolicy CachePolicy = new(TimeSpan.FromMinutes(15), TimeSpan.FromHours(2));
 
-    public MoviesDashboardProvider(IMovieService movieService)
+    private readonly IMovieService _movieService;
+    private readonly DashboardCacheService _cacheService;
+
+    public MoviesDashboardProvider(IMovieService movieService, DashboardCacheService cacheService)
     {
         _movieService = movieService;
+        _cacheService = cacheService;
     }
 
-    public async Task<DashboardSection> GetSectionAsync(DashboardRequest request, CancellationToken cancellationToken = default)
+    public Task<DashboardSection> GetSectionAsync(DashboardRequest request, CancellationToken cancellationToken = default)
+    {
+        var key = DashboardCacheKeys.PopularMovies();
+
+        return _cacheService.GetSectionAsync("movies", "tmdb", key, CachePolicy, token => FetchSectionAsync(request, token), cancellationToken);
+    }
+
+    private async Task<DashboardSection> FetchSectionAsync(DashboardRequest request, CancellationToken cancellationToken)
     {
         try
         {
             var movies = await _movieService.GetPopularMoviesAsync(cancellationToken);
-            var greekTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Athens");
 
-            return new DashboardSection
-            {
-                Category = "movies",
-                Provider = "tmdb",
-                Status = DashboardSectionStatus.Fresh,
-                FetchedAt = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, greekTimeZone),
-                Data = movies
-            };
+            return DashboardSectionFactory.CreateFresh("movies", "tmdb", movies);
         }
-        catch (Exception exception) when (!cancellationToken.IsCancellationRequested && exception is HttpRequestException or InvalidDataException or JsonException or OperationCanceledException)
+        catch (Exception exception) when (
+            !cancellationToken.IsCancellationRequested &&
+            exception is HttpRequestException or InvalidDataException or JsonException or OperationCanceledException)
         {
             var isTimeout = exception is OperationCanceledException;
+            var code = isTimeout ? "provider_timeout" : "provider_unavailable";
+            var message = isTimeout ? "The movie provider did not respond in time." : "Movie data could not be retrieved.";
 
-            return new DashboardSection
-            {
-                Category = "movies",
-                Provider = "tmdb",
-                Status = DashboardSectionStatus.Unavailable,
-                Error = new DashboardSectionError
-                {
-                    Code = isTimeout ? "provider_timeout" : "provider_unavailable",
-                    Message = isTimeout ? "The movie provider did not respond in time." : "Movie data could not be retrieved."
-                }
-            };
+            return DashboardSectionFactory.CreateUnavailable("movies", "tmdb", code, message);
         }
     }
 }

@@ -6,47 +6,41 @@ namespace AgileActors.ApiAggregation.Api.Dashboard;
 
 public sealed class WeatherDashboardProvider : IDashboardProvider
 {
-    private readonly IWeatherService _weatherService;
+    private static readonly DashboardCachePolicy CachePolicy = new(TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(30));
 
-    public WeatherDashboardProvider(IWeatherService weatherService)
+    private readonly IWeatherService _weatherService;
+    private readonly DashboardCacheService _cacheService;
+
+    public WeatherDashboardProvider(IWeatherService weatherService, DashboardCacheService cacheService)
     {
         _weatherService = weatherService;
+        _cacheService = cacheService;
     }
 
-    public async Task<DashboardSection> GetSectionAsync(DashboardRequest request, CancellationToken cancellationToken = default)
+    public Task<DashboardSection> GetSectionAsync(DashboardRequest request, CancellationToken cancellationToken = default)
+    {
+        var key = DashboardCacheKeys.Weather(request.Latitude!.Value, request.Longitude!.Value);
+
+        return _cacheService.GetSectionAsync("weather", "open-meteo", key, CachePolicy, token => FetchSectionAsync(request, token), cancellationToken);
+    }
+
+    private async Task<DashboardSection> FetchSectionAsync(DashboardRequest request, CancellationToken cancellationToken)
     {
         try
         {
-            var weather = await _weatherService.GetWeatherAsync(request.Latitude!.Value,request.Longitude!.Value,cancellationToken);
+            var weather = await _weatherService.GetWeatherAsync(request.Latitude!.Value, request.Longitude!.Value, cancellationToken);
 
-            var greekTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Athens");
-
-            return new DashboardSection
-            {
-                Category = "weather",
-                Provider = "open-meteo",
-                Status = DashboardSectionStatus.Fresh,
-                FetchedAt = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, greekTimeZone),
-                Data = weather
-            };
+            return DashboardSectionFactory.CreateFresh("weather", "open-meteo", weather);
         }
-        catch (Exception exception) when (!cancellationToken.IsCancellationRequested && exception is HttpRequestException or InvalidDataException or JsonException or OperationCanceledException)
+        catch (Exception exception) when (
+            !cancellationToken.IsCancellationRequested &&
+            exception is HttpRequestException or InvalidDataException or JsonException or OperationCanceledException)
         {
             var isTimeout = exception is OperationCanceledException;
+            var code = isTimeout ? "provider_timeout" : "provider_unavailable";
+            var message = isTimeout ? "The weather provider did not respond in time." : "Weather data could not be retrieved.";
 
-            return new DashboardSection
-            {
-                Category = "weather",
-                Provider = "open-meteo",
-                Status = DashboardSectionStatus.Unavailable,
-                Error = new DashboardSectionError
-                {
-                    Code = isTimeout ? "provider_timeout" : "provider_unavailable",
-                    Message = isTimeout
-                        ? "The weather provider did not respond in time."
-                        : "Weather data could not be retrieved."
-                }
-            };
+            return DashboardSectionFactory.CreateUnavailable("weather", "open-meteo", code, message);
         }
     }
 }

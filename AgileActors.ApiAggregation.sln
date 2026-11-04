@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.11.12328.437 stable
+VisualStudioVersion = 18.11.12328.437
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgileActors.ApiAggregation.Api", "AgileActors.ApiAggregation.Api\AgileActors.ApiAggregation.Api.csproj", "{6CA1F15D-63E7-4DEC-B1C0-64F0E1A2AD81}"
 EndProject
@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgileActors.ApiAggregation.Tests", "AgileActors.ApiAggregation.Tests\AgileActors.ApiAggregation.Tests.csproj", "{D60BA548-4A1E-4ED1-B3BB-48E996091E15}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,8 +34,23 @@ Global
 		{6CA1F15D-63E7-4DEC-B1C0-64F0E1A2AD81}.Release|x64.Build.0 = Release|Any CPU
 		{6CA1F15D-63E7-4DEC-B1C0-64F0E1A2AD81}.Release|x86.ActiveCfg = Release|Any CPU
 		{6CA1F15D-63E7-4DEC-B1C0-64F0E1A2AD81}.Release|x86.Build.0 = Release|Any CPU
+		{D60BA548-4A1E-4ED1-B3BB-48E996091E15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D60BA548-4A1E-4ED1-B3BB-48E996091E15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D60BA548-4A1E-4ED1-B3BB-48E996091E15}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D60BA548-4A1E-4ED1-B3BB-48E996091E15}.Debug|x64.Build.0 = Debug|Any CPU
+		{D60BA548-4A1E-4ED1-B3BB-48E996091E15}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D60BA548-4A1E-4ED1-B3BB-48E996091E15}.Debug|x86.Build.0 = Debug|Any CPU
+		{D60BA548-4A1E-4ED1-B3BB-48E996091E15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D60BA548-4A1E-4ED1-B3BB-48E996091E15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D60BA548-4A1E-4ED1-B3BB-48E996091E15}.Release|x64.ActiveCfg = Release|Any CPU
+		{D60BA548-4A1E-4ED1-B3BB-48E996091E15}.Release|x64.Build.0 = Release|Any CPU
+		{D60BA548-4A1E-4ED1-B3BB-48E996091E15}.Release|x86.ActiveCfg = Release|Any CPU
+		{D60BA548-4A1E-4ED1-B3BB-48E996091E15}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C58CCB85-5207-4E1A-8860-06AA33FF5BC5}
 	EndGlobalSection
 EndGlobal
