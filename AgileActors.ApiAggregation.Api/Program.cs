@@ -3,12 +3,16 @@ using AgileActors.ApiAggregation.Api.Services;
 using System.Net.Http.Headers;
 using AgileActors.ApiAggregation.Api.Providers.Tmdb;
 using AgileActors.ApiAggregation.Api.Providers.OpenLibrary;
+using AgileActors.ApiAggregation.Api.Dashboard;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+});
 
 builder.Services.AddOpenApi(options =>
 {
@@ -41,6 +45,12 @@ builder.Services.AddHttpClient<IBookService, OpenLibraryBookService>(client =>
     client.Timeout = TimeSpan.FromSeconds(10);
     client.DefaultRequestHeaders.UserAgent.ParseAdd("AgileActors.ApiAggregation/1.0");
 });
+
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+
+builder.Services.AddScoped<IDashboardProvider, WeatherDashboardProvider>();
+builder.Services.AddScoped<IDashboardProvider, MoviesDashboardProvider>();
+builder.Services.AddScoped<IDashboardProvider, BooksDashboardProvider>();
 
 var app = builder.Build();
 

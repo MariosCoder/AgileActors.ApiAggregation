@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Json;
 using AgileActors.ApiAggregation.Api.Models;
 using AgileActors.ApiAggregation.Api.Services;
+using System.Net;
 
 namespace AgileActors.ApiAggregation.Api.Providers.OpenLibrary;
 
@@ -20,7 +21,16 @@ public sealed class OpenLibraryBookService : IBookService
         var encodedQuery = Uri.EscapeDataString(query.Trim());
         var url = $"search.json?q={encodedQuery}&fields=key,title,author_name,first_publish_year&limit=10";
 
-        var response = await _httpClient.GetFromJsonAsync<OpenLibrarySearchResponse>(url, cancellationToken);
+        OpenLibrarySearchResponse? response;
+
+        try
+        {
+            response = await _httpClient.GetFromJsonAsync<OpenLibrarySearchResponse>(url, cancellationToken);
+        }
+        catch (HttpRequestException exception) when (exception.StatusCode == HttpStatusCode.UnprocessableEntity)
+        {
+            throw new ProviderQueryRejectedException("The book provider could not process this query. Try a more specific title or author.", exception);
+        }
 
         if (response?.Documents is null)
         {

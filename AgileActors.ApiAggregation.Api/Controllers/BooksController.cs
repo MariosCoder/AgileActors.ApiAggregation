@@ -2,7 +2,6 @@
 using AgileActors.ApiAggregation.Api.Models;
 using AgileActors.ApiAggregation.Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace AgileActors.ApiAggregation.Api.Controllers;
 
@@ -26,12 +25,12 @@ public sealed class BooksController : ControllerBase
 
             return Ok(books);
         }
-        catch (HttpRequestException exception) when (exception.StatusCode == HttpStatusCode.UnprocessableEntity)
+        catch (ProviderQueryRejectedException exception)
         {
             return Problem(
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Book search query was rejected.",
-                detail: "The book provider could not process this query. Try a more specific title or author.");
+                detail: exception.Message);
         }
     }
 }
