@@ -6,6 +6,7 @@ namespace AgileActors.ApiAggregation.Api.Dashboard;
 
 public sealed class MoviesDashboardProvider : IDashboardProvider
 {
+    public string Category => "movies";
     private static readonly DashboardCachePolicy CachePolicy = new(TimeSpan.FromMinutes(15), TimeSpan.FromHours(2));
 
     private readonly IMovieService _movieService;
@@ -17,11 +18,20 @@ public sealed class MoviesDashboardProvider : IDashboardProvider
         _cacheService = cacheService;
     }
 
-    public Task<DashboardSection> GetSectionAsync(DashboardRequest request, CancellationToken cancellationToken = default)
+    public async Task<DashboardSection> GetSectionAsync(DashboardRequest request, CancellationToken cancellationToken = default)
     {
         var key = DashboardCacheKeys.PopularMovies();
 
-        return _cacheService.GetSectionAsync("movies", "tmdb", key, CachePolicy, token => FetchSectionAsync(request, token), cancellationToken);
+        var section = await _cacheService.GetSectionAsync(Category, "tmdb", key, CachePolicy, token => FetchSectionAsync(request, token), cancellationToken);
+
+        if (section.Data is not IReadOnlyList<MovieResponse> movies)
+        {
+            return section;
+        }
+
+        var sortedMovies = DashboardListSorter.SortAndLimit(movies, movie => movie.Title, request.SortBy, request.SortDirection);
+
+        return DashboardSectionFactory.WithData(section, sortedMovies);
     }
 
     private async Task<DashboardSection> FetchSectionAsync(DashboardRequest request, CancellationToken cancellationToken)

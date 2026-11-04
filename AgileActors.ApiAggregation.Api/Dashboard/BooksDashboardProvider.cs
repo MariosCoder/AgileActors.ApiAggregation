@@ -6,6 +6,7 @@ namespace AgileActors.ApiAggregation.Api.Dashboard;
 
 public sealed class BooksDashboardProvider : IDashboardProvider
 {
+    public string Category => "books";
     private static readonly DashboardCachePolicy CachePolicy = new(TimeSpan.FromMinutes(15), TimeSpan.FromHours(2));
 
     private readonly IBookService _bookService;
@@ -17,18 +18,27 @@ public sealed class BooksDashboardProvider : IDashboardProvider
         _cacheService = cacheService;
     }
 
-    public Task<DashboardSection> GetSectionAsync(DashboardRequest request, CancellationToken cancellationToken = default)
+    public async Task<DashboardSection> GetSectionAsync(DashboardRequest request, CancellationToken cancellationToken = default)
     {
-        var key = DashboardCacheKeys.Books(request.BookQuery);
+        var key = DashboardCacheKeys.Books(request.BookQuery!);
 
-        return _cacheService.GetSectionAsync("books", "open-library", key, CachePolicy, token => FetchSectionAsync(request, token), cancellationToken);
+        var section = await _cacheService.GetSectionAsync(Category, "open-library", key, CachePolicy, token => FetchSectionAsync(request, token), cancellationToken);
+
+        if (section.Data is not IReadOnlyList<BookResponse> books)
+        {
+            return section;
+        }
+
+        var sortedBooks = DashboardListSorter.SortAndLimit(books, book => book.Title, request.SortBy, request.SortDirection);
+
+        return DashboardSectionFactory.WithData(section, sortedBooks);
     }
 
     private async Task<DashboardSection> FetchSectionAsync(DashboardRequest request, CancellationToken cancellationToken)
     {
         try
         {
-            var books = await _bookService.SearchBooksAsync(request.BookQuery, cancellationToken);
+            var books = await _bookService.SearchBooksAsync(request.BookQuery!, cancellationToken);
 
             return DashboardSectionFactory.CreateFresh("books", "open-library", books);
         }

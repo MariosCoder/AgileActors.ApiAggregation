@@ -13,7 +13,17 @@ public sealed class DashboardService : IDashboardService
 
     public async Task<DashboardResponse> GetDashboardAsync(DashboardRequest request, CancellationToken cancellationToken = default)
     {
-        var tasks = _providers.Select(provider => provider.GetSectionAsync(request, cancellationToken)).ToArray();
+        var requestedCategories = request.Categories.Select(category => category.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var availableCategories = _providers.Select(provider => provider.Category).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var unknownCategories = requestedCategories.Except(availableCategories, StringComparer.OrdinalIgnoreCase).ToArray();
+
+        if (unknownCategories.Length > 0)
+        {
+            throw new ArgumentException($"Unknown categories: {string.Join(", ", unknownCategories)}. Available categories: {string.Join(", ", availableCategories)}.", nameof(request.Categories));
+        }
+
+        var selectedProviders = _providers.Where(provider => requestedCategories.Count == 0 || requestedCategories.Contains(provider.Category));
+        var tasks = selectedProviders.Select(provider => provider.GetSectionAsync(request, cancellationToken)).ToArray();
 
         var sections = await Task.WhenAll(tasks);
 

@@ -39,7 +39,7 @@ public sealed class OpenLibraryBookService : IBookService
 
         var books = new List<BookResponse>();
 
-        foreach (var book in response.Documents.Take(3))
+        foreach (var book in response.Documents)
         {
             if (string.IsNullOrWhiteSpace(book.Key) || string.IsNullOrWhiteSpace(book.Title))
             {

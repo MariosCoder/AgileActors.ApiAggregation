@@ -18,8 +18,17 @@ public sealed class DashboardController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<DashboardResponse>> Get([FromQuery] DashboardRequest request, CancellationToken cancellationToken)
     {
-        var dashboard = await _dashboardService.GetDashboardAsync(request, cancellationToken);
+        try
+        {
+            var dashboard = await _dashboardService.GetDashboardAsync(request, cancellationToken);
 
-        return Ok(dashboard);
+            return Ok(dashboard);
+        }
+        catch (ArgumentException exception) when (exception.ParamName == nameof(DashboardRequest.Categories))
+        {
+            ModelState.AddModelError(nameof(DashboardRequest.Categories), exception.Message);
+
+            return ValidationProblem(ModelState);
+        }
     }
 }

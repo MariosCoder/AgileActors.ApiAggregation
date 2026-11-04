@@ -57,4 +57,17 @@ public static class DashboardSectionFactory
             Error = error
         };
     }
+
+    public static DashboardSection WithData(DashboardSection section, object data)
+    {
+        return new DashboardSection
+        {
+            Category = section.Category,
+            Provider = section.Provider,
+            Status = section.Status,
+            FetchedAt = section.FetchedAt,
+            Data = data,
+            Error = section.Error
+        };
+    }
 }

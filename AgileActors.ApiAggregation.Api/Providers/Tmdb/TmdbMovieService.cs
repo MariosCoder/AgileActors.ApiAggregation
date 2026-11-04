@@ -25,7 +25,7 @@ public sealed class TmdbMovieService : IMovieService
 
         var movies = new List<MovieResponse>();
 
-        foreach (var movie in response.Results.Take(3))
+        foreach (var movie in response.Results)
         {
             if (movie.Id is not int id || id <= 0 || string.IsNullOrWhiteSpace(movie.Title))
             {

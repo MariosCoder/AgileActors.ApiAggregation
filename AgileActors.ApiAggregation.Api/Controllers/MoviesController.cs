@@ -20,6 +20,6 @@ public sealed class MoviesController : ControllerBase
     {
         var movies = await _movieService.GetPopularMoviesAsync(cancellationToken);
 
-        return Ok(movies);
+        return Ok(movies.Take(3).ToArray());
     }
 }

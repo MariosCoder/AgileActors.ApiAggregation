@@ -2,17 +2,44 @@
 
 namespace AgileActors.ApiAggregation.Api.Models;
 
-public sealed class DashboardRequest
+public sealed class DashboardRequest : IValidatableObject
 {
-    [Required]
     [Range(-90, 90)]
     public double? Latitude { get; init; }
 
-    [Required]
     [Range(-180, 180)]
     public double? Longitude { get; init; }
 
-    [Required]
     [StringLength(200)]
-    public string BookQuery { get; init; } = string.Empty;
+    public string? BookQuery { get; init; }
+
+    public string[] Categories { get; init; } = Array.Empty<string>();
+
+    [EnumDataType(typeof(DashboardSortBy))]
+    public DashboardSortBy SortBy { get; init; } = DashboardSortBy.ProviderOrder;
+
+    [EnumDataType(typeof(DashboardSortDirection))]
+    public DashboardSortDirection SortDirection { get; init; } = DashboardSortDirection.Asc;
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        var includesWeather = Categories.Length == 0 || Categories.Any(category => string.Equals(category.Trim(), "weather", StringComparison.OrdinalIgnoreCase));
+
+        if (includesWeather && Latitude is null)
+        {
+            yield return new ValidationResult("Latitude is required when weather is selected.", new[] { nameof(Latitude) });
+        }
+
+        if (includesWeather && Longitude is null)
+        {
+            yield return new ValidationResult("Longitude is required when weather is selected.", new[] { nameof(Longitude) });
+        }
+
+        var includesBooks = Categories.Length == 0 || Categories.Any(category => string.Equals(category.Trim(), "books", StringComparison.OrdinalIgnoreCase));
+
+        if (includesBooks && string.IsNullOrWhiteSpace(BookQuery))
+        {
+            yield return new ValidationResult("BookQuery is required when books are selected.", new[] { nameof(BookQuery) });
+        }
+    }
 }

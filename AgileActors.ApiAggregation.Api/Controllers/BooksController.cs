@@ -23,7 +23,7 @@ public sealed class BooksController : ControllerBase
         {
             var books = await _bookService.SearchBooksAsync(query, cancellationToken);
 
-            return Ok(books);
+            return Ok(books.Take(3).ToArray());
         }
         catch (ProviderQueryRejectedException exception)
         {

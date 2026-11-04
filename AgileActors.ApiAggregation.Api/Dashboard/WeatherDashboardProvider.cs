@@ -6,6 +6,7 @@ namespace AgileActors.ApiAggregation.Api.Dashboard;
 
 public sealed class WeatherDashboardProvider : IDashboardProvider
 {
+    public string Category => "weather";
     private static readonly DashboardCachePolicy CachePolicy = new(TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(30));
 
     private readonly IWeatherService _weatherService;
